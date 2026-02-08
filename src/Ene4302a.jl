@@ -1,7 +1,100 @@
 module Ene4302a
 
-export solution, model
+export OrdinaryDifferentialEquation,
+       InitialCondition,
+       Solution,
+       solution!,
+       Sinusoidal
 
-include("sinusoidal.jl")
+"""
 
+    OrdinaryDifferentialEquation{N} <: Function
+
+Abstract base type for ordinary differential equations of order `N`.
+
+The ODE is assumed to be explicitly defined in the form:
+
+```math
+\\y ^ {(n)} (t) = f(t, y(t), \\dot{y}(t), \\ldots, y ^ {(n-1)}(t))
+```
+
+Subtypes should implement the call signature `(::ODE)(z, x, y)` to compute the right-hand side of the ODE in-place, where `z` stores the derivative, `x` is the independent variable, and `y` is the current state.
+
+"""
+abstract type OrdinaryDifferentialEquation{N} <: Function end
+
+const ODE = OrdinaryDifferentialEquation
+
+(this::ODE{N})(x, args::Vararg{Any,N}) where {N} =
+    (z = similar(args[1]); this(z, x, args...))
+
+(this::ODE{N})(z, x, args::Vararg{Any,N}) where {N} =
+    throw(MethodError("The right-hand side function is not defined."))
+
+"""
+
+    solution!(y, eq::ODE, y₀, Δx)
+
+Compute the analytical solution to an ODE in-place. Generic fallback throws an error.
+
+Subtypes of `ODE` can implement this method to provide analytical solutions when available.
+
+"""
+solution!(_, ::ODE, _, _) = throw(ArgumentError("No analytical solution available."))
+
+"""
+
+    InitialCondition{T,N,A<:AbstractArray{T,N}}
+
+Stores the initial condition for an ODE at position/time `x` with state `y`.
+
+# Fields
+
+- `x::T`: Initial position or time
+- `y::A`: Initial state (array with `N` dimensions)
+
+# Constructor
+
+    InitialCondition(x, y)
+    InitialCondition(y)  # assumes x = zero(y)
+
+"""
+struct InitialCondition{T,N,A<:AbstractArray{T,N}}
+    x::T
+    y::A
+end
+
+const IC = InitialCondition
+
+IC(y) = IC(zero(y), y)
+
+"""
+    Solution{Q<:ODE, C<:InitialCondition} <: Function
+
+A callable object representing the analytical solution to an ODE with given initial conditions.
+
+# Fields
+- `eq::ODE`: The ordinary differential equation
+- `ic::InitialCondition`: The initial condition
+
+# Usage
+    sol = Solution(eq, ic)
+    y = sol(x)          # Allocating: compute solution at x
+    sol(y, x)           # In-place: store solution at x in y
+"""
+struct Solution{Q<:ODE,C<:IC} <: Function
+    eq::Q
+    ic::C
+end
+
+(this::Solution)(x) = (y = similar(this.ic.y); this(y, x))
+
+function (this::Solution)(y, x)
+    (; eq, ic) = this
+    x₀, y₀ = ic.x, ic.y
+
+    solution!(y, eq, y₀, x-x₀)
+end
+
+include("odes.jl")
 end
