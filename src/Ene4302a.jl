@@ -3,6 +3,7 @@ module Ene4302a
 export OrdinaryDifferentialEquation,
        InitialCondition,
        Solution,
+       solution,
        solution!,
        Sinusoidal
 
@@ -41,6 +42,24 @@ Subtypes of `ODE` can implement this method to provide analytical solutions when
 
 """
 solution!(_, ::ODE, _, _) = throw(ArgumentError("No analytical solution available."))
+
+"""
+
+    solution(eq::ODE, y₀, Δx, i)
+
+Compute a specific component of the analytical solution to an ODE. Generic fallback throws an error.
+
+# Arguments
+
+- `eq::ODE`: The ODE instance
+- `y₀`: Initial condition vector
+- `Δx`: Time difference from the initial condition
+- `i`: Component index to extract from the solution
+
+Subtypes of `ODE` should implement this method to provide analytical solutions where available, with automatic bounds checking on the component index.
+
+"""
+solution(::ODE, _, _, _) = throw(ArgumentError("No analytical solution available."))
 
 """
 
@@ -87,9 +106,16 @@ struct Solution{Q<:ODE,C<:IC} <: Function
     ic::C
 end
 
-(this::Solution)(x) = (y = similar(this.ic.y); this(y, x))
+function (this::Solution)(x::Number, i)
+    (; eq, ic) = this
+    x₀, y₀ = ic.x, ic.y
 
-function (this::Solution)(y, x)
+    solution(eq, y₀, x-x₀, i)
+end
+
+(this::Solution)(x::Number) = (y = similar(this.ic.y); this(y, x))
+
+function (this::Solution)(y::AbstractArray, x::Number)
     (; eq, ic) = this
     x₀, y₀ = ic.x, ic.y
 
@@ -97,4 +123,5 @@ function (this::Solution)(y, x)
 end
 
 include("odes.jl")
+
 end

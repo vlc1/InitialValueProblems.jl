@@ -94,3 +94,34 @@ function solution!(y, eq::Sinusoidal, y₀, Δx)
 
     y .= exp(-λ * Δx) * y₀ + A * (λ * sin(ω * Δx) - ω * cos(ω * Δx) + ω * exp(-λ * Δx)) / (λ ^ 2 + ω ^ 2)
 end
+
+"""
+
+    solution(eq::Sinusoidal, y₀, Δx, i)
+
+Compute the i-th component of the analytical solution to the sinusoidally forced ODE.
+
+# Arguments
+
+- `eq::Sinusoidal`: The ODE instance containing parameters
+- `y₀`: Initial condition vector
+- `Δx`: Time difference from the initial condition
+- `i`: Component index to extract
+
+# Returns
+
+A scalar value representing the i-th component of the solution at time ``x_0 + \\Delta x``.
+
+# Bounds checking
+
+Component index `i` is checked against the bounds of both `y₀` and the amplitude vector `A`. Bounds checking can be disabled with `--check-bounds=no` for performance-critical code.
+
+"""
+function solution(eq::Sinusoidal, y₀, Δx, i)
+    @boundscheck checkbounds(y₀, i)
+
+    λ, ω, A = eq.lambda, eq.omega, eq.amp
+    @boundscheck checkbounds(A, i)
+
+    exp(-λ * Δx) * y₀[i] + A[i] * (λ * sin(ω * Δx) - ω * cos(ω * Δx) + ω * exp(-λ * Δx)) / (λ ^ 2 + ω ^ 2)
+end

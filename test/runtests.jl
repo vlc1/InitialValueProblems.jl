@@ -1,3 +1,4 @@
+using Plots
 using Ene4302a
 using Test
 
@@ -13,4 +14,7 @@ using Test
     y′ = sol(x)
 
     @test isapprox(y, y′)
+
+    p = plot(sol, 0:1, 1)
+    @test isa(p, Plots.Plot)
 end
