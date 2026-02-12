@@ -36,13 +36,12 @@ struct ForwardEuler{T,N,A<:AbstractArray{T,N},S,Q<:ODE{1}}
     tau::S
     x::S
     y::A
-    z::A
     dot::A
     eq::Q
 end
 
 ForwardEuler(tau, x, y, eq) =
-    ForwardEuler(tau, x, y, similar(y), similar(y), eq)
+    ForwardEuler(tau, x, deepcopy(y), similar(y), eq)
 
 Base.IteratorSize(::Type{<:ForwardEuler}) = Base.IsInfinite()
 
@@ -50,17 +49,23 @@ Base.IteratorEltype(::Type{<:ForwardEuler}) = Base.HasEltype()
 
 Base.eltype(::Type{<:ForwardEuler{T,N,A,S}}) where {T,N,A,S} = Tuple{S,A}
 
+#function Base.iterate(iter::ForwardEuler)
+#    (; x, y, z) = iter
+#    copy!(z, y)
+#    (x, z), x
+#end
 function Base.iterate(iter::ForwardEuler)
-    (; x, y, z) = iter
-    copy!(z, y)
-    (x, z), x
+    (; x, y) = iter
+    (x, y), iter
 end
 
-function Base.iterate(iter::ForwardEuler, x)
-    (; tau, z, dot, eq) = iter
+function Base.iterate(::ForwardEuler, state)
+    (; tau, x, y, dot, eq) = state
 
-    z .+= tau .* eq(dot, x, z)
+    y .+= tau .* eq(dot, x, y)
     x += tau
 
-    (x, z), x
+    next = ForwardEuler(tau, x, y, dot, eq)
+
+    (x, y), next
 end

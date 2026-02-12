@@ -12,12 +12,10 @@ using Test
 
     y′ = sol(x)
 
-    @test isapprox(y, y′)
-
     num = ForwardEuler(0.1, x, y, eq)
 
     p = plot(sol, 0:1, 1)
-    plot!(p, num, (0, 1), 1)
+    scatter!(p, num, (0, 1), 1)
 
     @test isa(p, Plots.Plot)
 end

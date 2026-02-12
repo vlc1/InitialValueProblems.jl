@@ -1,5 +1,7 @@
 module Ene4302a
 
+using NLsolve
+
 export OrdinaryDifferentialEquation,
        Solution,
        solution,
