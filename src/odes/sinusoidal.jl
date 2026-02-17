@@ -47,7 +47,7 @@ end
 
 """
 
-Overwrite `res` with `f(x, y + inc) α + inc` and return `inc`.
+Overwrite `res` with `f(x, y + inc) α + inc` and return `res`.
 
 """
 function (this::Sinusoidal)(res::AbstractArray, x::Number, y::AbstractArray, inc::AbstractArray, α::Number)
@@ -58,7 +58,7 @@ end
 
 """
 
-Overwrite `res` with `f(x, y + β * inc) α + inc` and return `inc`.
+Overwrite `res` with `f(x, y + β * inc) α + inc` and return `res`.
 
 """
 function (this::Sinusoidal)(res::AbstractArray, x::Number, y::AbstractArray, inc::AbstractArray, α::Number, β::Number)
@@ -111,7 +111,7 @@ function propagate(eq::Sinusoidal, x, y, tau, i)
     a = (omega * cos(omega * x) - lambda * sin(omega * x)) * num
 
     x += tau
-    a -= (omega * cos(omega * x) - lambda * sin(omega * x)) * num
+    a -= (omega * cos(omega * x) - lambda * sin(omega * x))
 
     den = lambda ^ 2 + omega ^ 2
     a /= den

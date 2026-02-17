@@ -19,7 +19,7 @@ Abstract base type for ordinary differential equations of order `N`.
 The ODE is assumed to be explicitly defined in the form:
 
 ```math
-\\y ^ {(n)} (t) = f(t, y(t), \\dot{y}(t), \\ldots, y ^ {(n-1)}(t))
+y ^ {(n)} (t) = f(t, y(t), \\dot{y}(t), \\ldots, y ^ {(n-1)}(t))
 ```
 
 Subtypes should implement the call signatures required by the integrators.
@@ -33,13 +33,24 @@ const ODE = OrdinaryDifferentialEquation
 
     Propagator{Q<:ODE}
 
-A callable object that takes the current state of the system and computes the next state based on the underlying ODE and the chosen step and initial condition.
+A callable object used to evaluate the analytic solution of an ODE.
 
 """
 struct Propagator{Q<:ODE}
     eq::Q
 end
 
+"""
+
+    (this::Propagator)(x, y::AbstractArray, tau, i)
+
+Apply the propagator to compute the `i`th component of the solution at time `x + tau` based on the current state `y` at time `x`.
+
+# Returns
+
+The value of the `i`th component of the solution at time `x + tau`.
+
+"""
 function (this::Propagator)(x, y::AbstractArray, tau, i)
     (; eq) = this
 
@@ -52,7 +63,8 @@ end
 
 Evaluate the analytic solution for the `i`th component when the model provides it.
 
-Returns a tuple `(x + tau, y_i)` where `y_i` is the `i`th component of the solution at time `x + tau`.
+Specialized methods for specific ODE types should be implemented to compute the solution based on the parameters of the ODE and the initial conditions.
+
 """
 function propagate end
 

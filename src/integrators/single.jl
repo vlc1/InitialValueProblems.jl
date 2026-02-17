@@ -34,7 +34,7 @@ Apply one step of the forward Euler scheme.
 
 # Returns
 
-The updated time `x + tau`.
+The updated state `y`.
 
 """
 function (this::ForwardEuler)(x, y::AbstractArray, tau, _=())
@@ -45,13 +45,42 @@ end
 
 """
 
-    BackwardEuler(eq, buffer)
+    BackwardEuler(eq)
+
+Representation of the backward Euler recurrence relation for explicit first-order ODEs.
+```math
+y^{n+1} = y^n + \\tau f(x^{n+1}, y^{n+1})
+```
+
+This is a callable object that applies one step of the backward (implicit) Euler scheme to update a state vector in-place. The implicit equation is solved using a nonlinear solver.
+
+# Fields
+
+- `eq::ODE{1}`: The explicit first-order ODE to solve
 
 """
 struct BackwardEuler{Q<:ODE{1}} <: Integrator{1}
     eq::Q
 end
 
+"""
+
+    (scheme::BackwardEuler)(x, y, tau, (inc,))
+
+Apply one step of the backward Euler scheme.
+
+# Arguments
+
+- `x::Number`: Current time
+- `y::AbstractArray`: Current state (modified in-place by accumulating the time-scaled increment)
+- `tau::Number`: Time step size
+- `(inc,)::Tuple`: A tuple containing a preallocated buffer `inc` for the increment (reset to zero used as an initial guess for the nonlinear solver)
+
+# Returns
+
+The updated state `y`.
+
+"""
 function (this::BackwardEuler)(x, y::AbstractArray, tau, (inc,))
     (; eq) = this
 
@@ -68,13 +97,42 @@ end
 
 """
 
-    Midpoint(eq, buffer)
+    Midpoint(eq)
+
+Representation of the midpoint (implicit trapezoidal) recurrence relation for explicit first-order ODEs.
+```math
+y^{n+1} = y^n + \\tau f(x^{n+1/2}, (y^n + y^{n+1})/2)
+```
+
+This is a callable object that applies one step of the implicit midpoint scheme to update a state vector in-place. The implicit equation is solved using a nonlinear solver.
+
+# Fields
+
+- `eq::ODE{1}`: The explicit first-order ODE to solve
 
 """
 struct Midpoint{Q<:ODE{1}} <: Integrator{1}
     eq::Q
 end
 
+"""
+
+    (scheme::Midpoint)(x, y, tau, (inc,))
+
+Apply one step of the midpoint scheme.
+
+# Arguments
+
+- `x::Number`: Current time
+- `y::AbstractArray`: Current state (modified in-place by accumulating the time-scaled increment)
+- `tau::Number`: Time step size
+- `(inc,)::Tuple`: A tuple containing a preallocated buffer `inc` for the increment (reset to zero used as an initial guess for the nonlinear solver)
+
+# Returns
+
+The updated state `y`.
+
+"""
 function (this::Midpoint)(x, y::AbstractArray, tau, (inc,))
     (; eq) = this
 
