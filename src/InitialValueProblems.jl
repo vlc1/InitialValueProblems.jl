@@ -4,6 +4,8 @@ using NLsolve
 
 export OrdinaryDifferentialEquation,
        Propagator,
+       propagate,
+       Integrator,
        ForwardEuler,
        BackwardEuler,
        Midpoint,
