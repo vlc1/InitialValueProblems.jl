@@ -6,7 +6,7 @@ A first-order scalar ODE with sinusoidal forcing.
 
 This ODE represents the differential equation:
 ```math
-\\dot{y}(t) = A \\sin(\\omega t) - \\lambda y(t)
+\\dot{y} \\left ( x \\right ) = A \\sin \\left ( \\omega x \\right ) - \\lambda y \\left ( x \\right )
 ```
 
 The solution exhibits a combination of exponential decay (controlled by `lambda`) and periodic forcing (controlled by `omega` and `amp`). This problem is commonly used to illustrate resonance phenomena and the interaction between transient and steady-state behavior.
@@ -94,19 +94,27 @@ A `Tuple` containing:
 The analytical solution is given by:
 
 ```math
-y(x) = \\exp(-\\lambda \\Delta x) y_0 + \\frac{A}{\\lambda^2 + \\omega^2} \\left( \\lambda \\sin(\\omega \\Delta x) - \\omega \\cos(\\omega \\Delta x) + \\omega \\exp(-\\lambda \\Delta x) \\right)
+y(x) = \\exp \\left [ -\\lambda \\left ( x - x _ 0 \\right ) \\right ] \\left [ y _ 0 - \\frac{A}{\\lambda^2 + \\omega^2} \\left( \\lambda \\sin \\left ( \\omega x _ 0 \\right ) - \\omega \\cos \\left ( \\omega x _ 0 \\right ) \\right ) \\right ]
++ \\frac{A}{\\lambda^2 + \\omega^2} \\left( \\lambda \\sin \\left ( \\omega x \\right ) - \\omega \\cos \\left ( \\omega x \\right ) \\right )
 ```
 
-where ``y_0`` is the initial condition, ``\\lambda`` is the decay rate, ``\\omega`` is the angular frequency, and ``A`` is the forcing amplitude.
+where ``y _ 0`` is the initial condition, ``\\lambda`` is the decay rate, ``\\omega`` is the angular frequency, and ``A`` is the forcing amplitude.
 
 """
 function propagate(eq::Sinusoidal, x, y, tau, i)
     @boundscheck checkbounds(y, i)
 
-    λ, ω, A = eq.lambda, eq.omega, eq.amp
-    @boundscheck checkbounds(A, i)
+    (; lambda, omega, amp) = eq
+    @boundscheck checkbounds(amp, i)
+
+    num = exp(-lambda * tau)
+    a = (omega * cos(omega * x) - lambda * sin(omega * x)) * num
 
     x += tau
+    a -= (omega * cos(omega * x) - lambda * sin(omega * x)) * num
 
-    x, exp(-λ * x) * y[i] + A[i] * (λ * sin(ω * x) - ω * cos(ω * x) + ω * exp(-λ * x)) / (λ ^ 2 + ω ^ 2)
+    den = lambda ^ 2 + omega ^ 2
+    a /= den
+
+    amp[i] * a + num * y[i]
 end

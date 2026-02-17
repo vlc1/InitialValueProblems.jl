@@ -37,10 +37,9 @@ Apply one step of the forward Euler scheme.
 The updated time `x + tau`.
 
 """
-function (this::ForwardEuler)(x, y::AbstractArray, tau)
+function (this::ForwardEuler)(x, y::AbstractArray, tau, _=())
     (; eq) = this
     eq(x, y, tau)
-    x + tau
 end
 
 
@@ -49,13 +48,12 @@ end
     BackwardEuler(eq, buffer)
 
 """
-struct BackwardEuler{Q<:ODE{1},A<:AbstractArray} <: Integrator{1}
+struct BackwardEuler{Q<:ODE{1}} <: Integrator{1}
     eq::Q
-    inc::A
 end
 
-function (this::BackwardEuler)(x, y::AbstractArray, tau)
-    (; eq, inc) = this
+function (this::BackwardEuler)(x, y::AbstractArray, tau, (inc,))
+    (; eq) = this
 
     x += tau
 
@@ -63,9 +61,8 @@ function (this::BackwardEuler)(x, y::AbstractArray, tau)
     sol = nlsolve(inc) do res, inc
         eq(res, x, y, inc, -tau)
     end
-    y .+= sol.zero
 
-    x
+    y .+= sol.zero
 end
 
 
@@ -74,13 +71,12 @@ end
     Midpoint(eq, buffer)
 
 """
-struct Midpoint{Q<:ODE{1},A<:AbstractArray} <: Integrator{1}
+struct Midpoint{Q<:ODE{1}} <: Integrator{1}
     eq::Q
-    inc::A
 end
 
-function (this::Midpoint)(x, y::AbstractArray, tau)
-    (; eq, inc) = this
+function (this::Midpoint)(x, y::AbstractArray, tau, (inc,))
+    (; eq) = this
 
     x += tau / 2
 
@@ -88,7 +84,6 @@ function (this::Midpoint)(x, y::AbstractArray, tau)
     sol = nlsolve(inc) do res, inc
         eq(res, x, y, inc, -tau, one(tau) / 2)
     end
-    y .+= sol.zero
 
-    x += tau / 2
+    y .+= sol.zero
 end

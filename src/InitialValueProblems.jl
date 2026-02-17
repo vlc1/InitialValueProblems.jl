@@ -8,6 +8,7 @@ export OrdinaryDifferentialEquation,
        BackwardEuler,
        Midpoint,
        Sinusoidal
+#    Oscillator
 
 """
 
@@ -45,7 +46,18 @@ function (this::Propagator)(x, y::AbstractArray, tau, i)
     propagate(eq, x, y, tau, i)
 end
 
+"""
+
+    propagate(eq::ODE, x, y, tau, i)
+
+Evaluate the analytic solution for the `i`th component when the model provides it.
+
+Returns a tuple `(x + tau, y_i)` where `y_i` is the `i`th component of the solution at time `x + tau`.
+"""
+function propagate end
+
 include("odes/sinusoidal.jl")
+#include("odes/oscillators.jl")
 
 """
 
