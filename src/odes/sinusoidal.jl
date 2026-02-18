@@ -36,7 +36,7 @@ Sinusoidal(; lambda = -0.2, omega = 4., amp = ones(1) / 2) =
 
 """
 
-Overwrite `y` with `f(x, y) * α + y` and return `y`.
+Required for explicit integrators. Overwrite `y` with `f(x, y) * α + y` and return `y`.
 
 """
 function (this::Sinusoidal)(x, y::AbstractArray, α::Number)
@@ -47,21 +47,10 @@ end
 
 """
 
-Overwrite `res` with `f(x, y + inc) α + inc` and return `res`.
+Required for implicit integrators. Overwrite `res` with `f(x, y + β * inc) α + inc` and return `res`.
 
 """
-function (this::Sinusoidal)(res::AbstractArray, x::Number, y::AbstractArray, inc::AbstractArray, α::Number)
-    λ, ω, A = this.lambda, this.omega, this.amp
-
-    @. res .= inc + (A * sin(ω * x) - λ * (y + inc)) * α
-end
-
-"""
-
-Overwrite `res` with `f(x, y + β * inc) α + inc` and return `res`.
-
-"""
-function (this::Sinusoidal)(res::AbstractArray, x::Number, y::AbstractArray, inc::AbstractArray, α::Number, β::Number)
+function (this::Sinusoidal)(res::AbstractArray, x::Number, y::AbstractArray, inc::AbstractArray, α::Number, β::Number=one(α))
     λ, ω, A = this.lambda, this.omega, this.amp
 
     @. res .= inc + (A * sin(ω * x) - λ * (y + inc * β)) * α

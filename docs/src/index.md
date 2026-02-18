@@ -130,29 +130,53 @@ The recipes automatically evaluate the solution over the provided time range and
 
 ## Implementing Custom ODEs
 
-To implement a custom ODE, subtype `OrdinaryDifferentialEquation{N}` where `N` is the order:
+To implement a custom ODE, subtype `OrdinaryDifferentialEquation{N}` where `N` is the order. Your ODE type must implement two call signatures:
+
+### 1. Explicit Integrator Signature
+
+Required for explicit methods like `ForwardEuler`:
+
+```julia
+function (eq::MyODE)(x, y::AbstractArray, α::Number)
+    # Overwrite y with f(x, y) * α + y
+    # Return y
+end
+```
+
+This signature computes `y ← y + α·f(x, y)` in-place.
+
+### 2. Implicit Integrator Signature
+
+Required for implicit methods like `BackwardEuler` and `Midpoint`:
+
+```julia
+function (eq::MyODE)(res::AbstractArray, x::Number, y::AbstractArray,
+                      inc::AbstractArray, α::Number, β::Number=one(α))
+    # Overwrite res with f(x, y + β * inc) * α + inc
+    # Return res
+end
+```
+
+This signature computes `res ← inc + α·f(x, y + β·inc)` in-place. The optional parameter `β` defaults to `one(α)`:
+- For `BackwardEuler`: `β = 1` (evaluates `f(x, y + inc)`)
+- For `Midpoint`: `β = 0.5` (evaluates `f(x, y + inc/2)`)
+
+### Complete Example
 
 ```julia
 struct MyODE{T} <: OrdinaryDifferentialEquation{1}
     param::T
 end
 
-# Implement call signatures for integrators
+# Explicit signature
 function (eq::MyODE)(x, y::AbstractArray, α::Number)
-    # For ForwardEuler: y += f(x, y) * α
-    # Modify y in-place
+    @. y += eq.param * sin(x) * α
 end
 
-function (eq::MyODE)(res::AbstractArray, x::Number, y::AbstractArray, 
-                      inc::AbstractArray, α::Number)
-    # For BackwardEuler: res = inc + f(x, y + inc) * α
-    # Set res in-place
-end
-
+# Implicit signature
 function (eq::MyODE)(res::AbstractArray, x::Number, y::AbstractArray,
-                      inc::AbstractArray, α::Number, β::Number)
-    # For Midpoint: res = inc + f(x, y + β * inc) * α
-    # Set res in-place
+                      inc::AbstractArray, α::Number, β::Number=one(α))
+    @. res = inc + eq.param * sin(x) * α
 end
 
 # Optional: implement analytical solution
